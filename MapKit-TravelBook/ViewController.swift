@@ -8,10 +8,19 @@
 import UIKit
 import MapKit
 import CoreLocation
+import CoreData
 
 class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var nameTextField: UITextField!
+    
+    @IBOutlet weak var commentTextField: UITextField!
+    
+    var chosenLatiude = Double()
+    var chosenLongitude = Double()
+    
+    
     var locationManager = CLLocationManager()
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,17 +42,43 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
         
     }
     
+    @IBAction func saveButtonClicked(_ sender: Any) {
+        let appDelegate=UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        let newPlace = NSEntityDescription.insertNewObject(forEntityName: "Places", into: context)
+        newPlace.setValue(nameTextField.text, forKey: "title")
+        newPlace.setValue(commentTextField.text, forKey: "subtitle")
+        newPlace.setValue(chosenLatiude, forKey: "latiude")
+        newPlace.setValue(chosenLongitude, forKey: "longitude")
+        newPlace.setValue(UUID(), forKey: "id")
+        
+        
+        do{
+            try context.save()
+            print("success")
+        }
+        catch{
+            print("error")
+            
+        }
+        
+        
+    }
     
     @objc func chooseLocation(gestureRecogniner: UILongPressGestureRecognizer){
         if gestureRecogniner.state == .began{
             let touchedPoint = gestureRecogniner.location(in: self.mapView)
             let touchedCoordinates = self.mapView.convert(touchedPoint,toCoordinateFrom:self.mapView)
             
+            chosenLatiude=touchedCoordinates.latitude
+            chosenLongitude=touchedCoordinates.longitude
+            
             let annotation=MKPointAnnotation()
             
             annotation.coordinate=touchedCoordinates
-            annotation.title="New Annotion"
-            annotation.subtitle="Travel Book"
+            annotation.title=nameTextField.text
+            annotation.subtitle=commentTextField.text
             self.mapView.addAnnotation(annotation)
         }
         
