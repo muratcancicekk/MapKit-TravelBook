@@ -161,46 +161,72 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-           
-           if annotation is MKUserLocation {
-               return nil
-           }
-           
-           let reuseId = "myAnnotation"
-           var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
-           
-           if pinView == nil {
-               pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
-               pinView?.canShowCallout = true
-               pinView?.tintColor = UIColor.black
-               
-               let button = UIButton(type: UIButton.ButtonType.detailDisclosure)
-               pinView?.rightCalloutAccessoryView = button
-               
-           } else {
-               pinView?.annotation = annotation
-           }
-           
-           
-           
-           return pinView
-       }
-    
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) { // güncellenen lokasyonları bir dizide tutar
         
-        if selectedTitle == ""{
-        let location = CLLocationCoordinate2D(latitude: locations[0].coordinate.latitude, longitude: locations[0].coordinate.longitude)
-        let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
-        let region = MKCoordinateRegion(center: location, span: span)
-        mapView.setRegion(region, animated: true)
+        if annotation is MKUserLocation {
+            return nil
+        }
+        
+        let reuseId = "myAnnotation"
+        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
+        
+        if pinView == nil {
+            pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            pinView?.canShowCallout = true
+            pinView?.tintColor = UIColor.black
+            
+            let button = UIButton(type: UIButton.ButtonType.detailDisclosure)
+            pinView?.rightCalloutAccessoryView = button
+            
+        } else {
+            pinView?.annotation = annotation
+        }
+        
+        
+        
+        return pinView
     }
-        else {
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        if selectedTitle != "" {
+            
+            let requestLocation = CLLocation(latitude: annotationLatitude, longitude: annotationLongitude)
+            
+            
+            CLGeocoder().reverseGeocodeLocation(requestLocation) { (placemarks, error) in
+                //closure
+                
+                if let placemark = placemarks {
+                    if placemark.count > 0 {
+                        
+                        let newPlacemark = MKPlacemark(placemark: placemark[0])
+                        let item = MKMapItem(placemark: newPlacemark)
+                        item.name = self.annotationTitle
+                        let launchOptions = [MKLaunchOptionsDirectionsModeKey:MKLaunchOptionsDirectionsModeDriving]
+                        item.openInMaps(launchOptions: launchOptions)
+                        
+                    }
+                }
+            }
+            
+            
+            func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) { // güncellenen lokasyonları bir dizide tutar
+                
+                if selectedTitle == ""{
+                    let location = CLLocationCoordinate2D(latitude: locations[0].coordinate.latitude, longitude: locations[0].coordinate.longitude)
+                    let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
+                    let region = MKCoordinateRegion(center: location, span: span)
+                    mapView.setRegion(region, animated: true)
+                }
+                else {
+                    
+                }
+            }
+            
+
+                    }
+                }
+            
             
         }
-    }
+        
     
-    
-    
-}
-
