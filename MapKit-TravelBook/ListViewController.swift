@@ -12,7 +12,8 @@ class ListViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
     
     var placesNameArray=[String]()
     var placesIdArray = [UUID]()
- 
+    var chosenTitle = ""
+    var chosenId = UUID()
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -20,56 +21,57 @@ class ListViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
         super.viewDidLoad()
         
         navigationController?.navigationBar.topItem?.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.add, target: self, action: #selector(addButtonClicked))
-
+        
         tableView.delegate=self
         tableView.dataSource=self
         getCoreData()
     }
     
     override func viewWillAppear(_ animated: Bool) {
-               
-               NotificationCenter.default.addObserver(self, selector: #selector(getCoreData), name: NSNotification.Name("New Data"), object: nil)
-           }
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(getCoreData), name: NSNotification.Name("NewPlace"), object: nil)
+    }
     
     @objc func getCoreData(){
+        
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        
+        let fetchReq = NSFetchRequest<NSFetchRequestResult>(entityName: "Places")
+        fetchReq.returnsObjectsAsFaults = false
+        do {
+            let results = try context.fetch(fetchReq)
+            
+            if results.count > 0 {
+                self .placesIdArray.removeAll(keepingCapacity: false)
+                self.placesNameArray.removeAll(keepingCapacity: false)
                 
-                
-                let appDelegate = UIApplication.shared.delegate as! AppDelegate
-                let context = appDelegate.persistentContainer.viewContext
-                
-                
-                let fetchReq = NSFetchRequest<NSFetchRequestResult>(entityName: "Places")
-                fetchReq.returnsObjectsAsFaults = false
-                do {
-                    let results = try context.fetch(fetchReq)
+                for result in results as! [NSManagedObject] {
+                    if let name =  result.value(forKey: "title") as? String{
+                        self.placesNameArray.append(name)
+                    }
+                    if let id = result.value(forKey: "id") as? UUID{
+                        self.placesIdArray.append(id)
+                    }
+                    tableView.reloadData()
+
+              
                     
-                    if results.count > 0 {
-                        self .placesIdArray.removeAll(keepingCapacity: false)
-                        self.placesNameArray.removeAll(keepingCapacity: false)
-                        
-                        for result in results as! [NSManagedObject] {
-                        if let name =  result.value(forKey: "title") as? String{
-                            placesNameArray.append(name)
-                        }
-                        if let id = result.value(forKey: "id") as? UUID{
-                            placesIdArray.append(id)
-                            
-                        }
-                        self.tableView.reloadData()
-                       
-                    }
-                    }
-                 
                 }
-                catch{
-                    print("error")
-                }
-                
-                
             }
+            
+        }
+        catch{
+            print("error")
+        }
+        
+        
+    }
     
     @objc func addButtonClicked() {
-        
+        chosenTitle = ""
         performSegue(withIdentifier: "toViewController", sender: nil)
     }
     
@@ -84,11 +86,34 @@ class ListViewController: UIViewController,UITableViewDelegate,UITableViewDataSo
         return placesNameArray.count
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        chosenTitle = placesNameArray[indexPath.row]
+        chosenId = placesIdArray[indexPath.row]
+        performSegue(withIdentifier: "toViewController", sender: nil)
+        
+    }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        if segue.identifier == "toViewController"{
+            let destinationVC = segue.destination as! ViewController
+            
+            destinationVC.selectedTitle=chosenTitle
+            destinationVC.selectedId=chosenId
+            
+            
+            
+            
+            
+        }
+        
+        
+    }
     
-  
-
     
-
+    
+    
+    
+    
     
 }
- 
+

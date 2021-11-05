@@ -19,6 +19,13 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
     
     var chosenLatiude = Double()
     var chosenLongitude = Double()
+    var selectedTitle = ""
+    var selectedId = UUID()
+    var annotationTitle = ""
+    var annotationSubTitle = ""
+    var annotationLatitude = Double()
+    var annotationLongitude = Double()
+    
     
     
     var locationManager = CLLocationManager()
@@ -37,7 +44,70 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
         gestureRecognizer.minimumPressDuration = 3
         mapView.addGestureRecognizer(gestureRecognizer)
         
-                                                             
+        if selectedTitle != "" {
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            let context = appDelegate.persistentContainer.viewContext
+            
+            let idString = selectedId.uuidString
+            
+            let fetchReq = NSFetchRequest<NSFetchRequestResult>(entityName: "Places")
+            fetchReq.returnsObjectsAsFaults = false
+            fetchReq.predicate = NSPredicate(format: "id = %@",  idString)
+            do{
+                let results = try context.fetch(fetchReq)
+                if results.count > 0{
+                    
+                    
+                    for result in results as! [NSManagedObject] {
+                        if let title = result.value(forKey: "title") as? String{
+                            annotationTitle=title
+                            if let subtitle = result.value(forKey: "subtitle") as? String{
+                                annotationSubTitle=subtitle
+                                if let latiude = result.value(forKey: "latiude") as? Double{
+                                    annotationLatitude=latiude
+                                    if let longitude = result.value(forKey: "longitude") as? Double{
+                                        annotationLongitude=longitude
+                                        
+                                        
+                                        let annotation = MKPointAnnotation()
+                                        annotation.title=annotationTitle
+                                        annotation.subtitle=annotationSubTitle
+                                        let coordinate = CLLocationCoordinate2D(latitude: annotationLatitude, longitude: annotationLongitude)
+                                        annotation.coordinate=coordinate
+                                        
+                                        mapView.addAnnotation(annotation)
+                                        nameTextField.text = annotationTitle
+                                        commentTextField.text = annotationSubTitle
+                                        
+                                        
+                                        locationManager.stopUpdatingLocation()
+                                        let span = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                                        let region = MKCoordinateRegion(center: coordinate, span: span)
+                                        mapView.setRegion(region, animated: true )
+                                        
+                                    }
+                                }
+                            }
+                            
+                        }
+                        
+                        
+                        
+                        
+                    }
+                }
+            } catch{
+                print("error")
+            }
+            
+            
+            
+            
+        }
+        else {
+            
+        }
+        
         
         
     }
@@ -62,6 +132,10 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
             print("error")
             
         }
+        
+        NotificationCenter.default.post(name: NSNotification.Name("NewPlace"), object: nil)
+        self.navigationController?.popViewController(animated: true)
+        
         
         
     }
@@ -88,11 +162,18 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
     
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) { // güncellenen lokasyonları bir dizide tutar
+        
+        if selectedTitle == ""{
         let location = CLLocationCoordinate2D(latitude: locations[0].coordinate.latitude, longitude: locations[0].coordinate.longitude)
         let span = MKCoordinateSpan(latitudeDelta: 0.03, longitudeDelta: 0.03)
         let region = MKCoordinateRegion(center: location, span: span)
         mapView.setRegion(region, animated: true)
     }
+        else {
+            
+        }
+    }
+    
     
     
 }
