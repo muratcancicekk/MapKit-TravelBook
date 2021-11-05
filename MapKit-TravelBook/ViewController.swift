@@ -160,6 +160,32 @@ class ViewController: UIViewController,MKMapViewDelegate,CLLocationManagerDelega
         
     }
     
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+           
+           if annotation is MKUserLocation {
+               return nil
+           }
+           
+           let reuseId = "myAnnotation"
+           var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
+           
+           if pinView == nil {
+               pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+               pinView?.canShowCallout = true
+               pinView?.tintColor = UIColor.black
+               
+               let button = UIButton(type: UIButton.ButtonType.detailDisclosure)
+               pinView?.rightCalloutAccessoryView = button
+               
+           } else {
+               pinView?.annotation = annotation
+           }
+           
+           
+           
+           return pinView
+       }
+    
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) { // güncellenen lokasyonları bir dizide tutar
         
